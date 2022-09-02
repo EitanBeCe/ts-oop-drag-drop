@@ -1,9 +1,28 @@
+// ******** Project Type
+
+enum ProjectStatus {
+  Active,
+  Finished,
+}
+
+class Project {
+  constructor(
+    public id: string,
+    public title: string,
+    public description: string,
+    public people: number,
+    public status: ProjectStatus
+  ) {}
+}
+
 // ******** Project State Managment
+
+type Listener = (items: Project[]) => void;
 
 // Private constructor, Singletone pattern, only 1 instance. Available everywhere (static)
 class ProjectState {
-  private listeners: any[] = []; // List of functions, that we'll call if smth changes
-  private projects: any[] = [];
+  private listeners: Listener[] = []; // List of functions, that we'll call if smth changes
+  private projects: Project[] = [];
   private static instance: ProjectState;
 
   private constructor() {}
@@ -17,17 +36,18 @@ class ProjectState {
     }
   }
 
-  addListener(listenerFn: Function) {
+  addListener(listenerFn: Listener) {
     this.listeners.push(listenerFn);
   }
 
   addProject(title: string, description: string, people: number) {
-    const newProject = {
-      id: Math.random().toString(),
+    const newProject = new Project(
+      Math.random().toString(),
       title,
       description,
       people,
-    };
+      ProjectStatus.Active
+    );
     this.projects.push(newProject);
 
     for (const listenerFn of this.listeners) {
@@ -92,7 +112,7 @@ class ProjectList {
   templateElement: HTMLTemplateElement;
   hostElement: HTMLDivElement;
   element: HTMLElement;
-  assignedProjects: any[];
+  assignedProjects: Project[];
 
   constructor(private type: 'active' | 'finished') {
     this.templateElement = document.getElementById('project-list')! as HTMLTemplateElement;
@@ -103,7 +123,7 @@ class ProjectList {
     this.element = importedNode.firstElementChild as HTMLElement;
     this.element.id = `${this.type}-projects`;
 
-    projectState.addListener((projects: any[]) => {
+    projectState.addListener((projects: Project[]) => {
       this.assignedProjects = projects;
       this.renderProjects();
     });
